@@ -19,25 +19,23 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-
-const formSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, "Required"),
-});
+import { loginSchema } from "../schemas";
+import { useLogin } from "../api/use-login";
 
 export const SignInCard = () => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const { mutate } = useLogin();
+
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log({ values });
-    
-  }
+  const onSubmit = (values: z.infer<typeof loginSchema>) => {
+    mutate({ json: values });
+  };
 
   return (
     <Card className="w-full h-full md:w-[487px] border-none shadow-none">
@@ -56,11 +54,11 @@ export const SignInCard = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                  <Input
-                    {...field}
-                    type="email"
-                    placeholder="Enter email address"
-                  />
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="Enter email address"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -72,11 +70,11 @@ export const SignInCard = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="Enter password"
-                  />
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Enter password"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,7 +117,7 @@ export const SignInCard = () => {
           {/* Already have an account? */}
           Don&apos;t have an account?
           <Link href={"/sign-up"}>
-              <span className="text-blue-700 hover:underline">&nbsp;Sign Up</span>
+            <span className="text-blue-700 hover:underline">&nbsp;Sign Up</span>
           </Link>
         </p>
       </CardContent>
