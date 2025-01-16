@@ -21,6 +21,8 @@ import { DataTable } from "./data-table";
 
 import { columns } from "./columns";
 import { DataKanban } from "./data-kanban";
+import { DataCalendar } from "./data-calendar";
+
 import { useBulkUpdateTasks } from "../api/use-bulk-update-tasks";
 
 export const TaskViewSwitcher = () => {
@@ -92,8 +94,8 @@ export const TaskViewSwitcher = () => {
                 data={tasks?.documents ?? []}
               />
             </TabsContent>
-            <TabsContent value="calender" className="mt-0">
-              {JSON.stringify(tasks)}
+            <TabsContent value="calender" className="mt-0 h-full pb-4">
+              <DataCalendar data={tasks?.documents ?? []} />
             </TabsContent>
           </>
         )}
