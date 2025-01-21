@@ -42,7 +42,7 @@ export const EditProjectForm = ({
   const router = useRouter();
   const { mutate, isPending } = useUpdateProject();
   const { mutate: deleteProject, isPending: isDeletingProject } =
-  useDeleteProject();
+    useDeleteProject();
 
   const [DeleteDialog, confirmDelete] = useConfirm(
     "Delete Project",
@@ -83,17 +83,10 @@ export const EditProjectForm = ({
       image: values.image instanceof File ? values.image : "",
     };
 
-    mutate(
-      {
-        form: finalValues,
-        param: { projectId: initialValues.$id },
-      },
-      {
-        onSuccess: () => {
-          form.reset();
-        },
-      }
-    );
+    mutate({
+      form: finalValues,
+      param: { projectId: initialValues.$id },
+    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

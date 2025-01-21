@@ -1,16 +1,18 @@
-import { ID, Query } from "node-appwrite";
+import { z } from "zod";
 import { Hono } from "hono";
+import { ID, Query } from "node-appwrite";
 import { zValidator } from "@hono/zod-validator";
 
+import { sessionMiddleware } from "@/lib/session-middleware";
+import { generateInviteCode } from "@/lib/utils";
 import { createWorkspaceSchema, updateWorkspaceSchema } from "../schemas";
 
-import { sessionMiddleware } from "@/lib/session-middleware";
-import { DATABASE_ID, IMAGES_BUCKET_ID, MEMBERS_ID, WORKSPACE_ID } from "@/config";
-import { MemberRole } from "@/features/members/types";
-import { generateInviteCode } from "@/lib/utils";
-import { getMember } from "@/features/members/utils";
-import { z } from "zod";
 import { Workspace } from "../types";
+
+import { getMember } from "@/features/members/utils";
+import { MemberRole } from "@/features/members/types";
+
+import { DATABASE_ID, IMAGES_BUCKET_ID, MEMBERS_ID, WORKSPACES_ID } from "@/config";
 
 const app = new Hono()
     .get(
@@ -34,7 +36,7 @@ const app = new Hono()
 
             const workspaces = await databases.listDocuments(
                 DATABASE_ID,
-                WORKSPACE_ID,
+                WORKSPACES_ID,
                 [
                     Query.orderDesc("$createdAt"),
                     Query.contains("$id", workspaceIds)
@@ -42,6 +44,55 @@ const app = new Hono()
             );
 
             return c.json({ data: workspaces });
+        }
+    )
+    .get(
+        "/:workspaceId",
+        sessionMiddleware,
+        async (c) => {
+            const user = c.get("user");
+            const databases = c.get("databases");
+            const { workspaceId } = c.req.param();
+
+            const member = await getMember({
+                databases,
+                workspaceId,
+                userId: user.$id,
+            });
+
+            if (!member) {
+                return c.json({ error: "Unauthorized" }, 401);
+            };
+
+            const workspace = await databases.getDocument<Workspace>(
+                DATABASE_ID,
+                WORKSPACES_ID,
+                workspaceId,
+            );
+
+            return c.json({ data: workspace });
+        }
+    )
+    .get(
+        "/:workspaceId/info",
+        sessionMiddleware,
+        async (c) => {
+            const databases = c.get("databases");
+            const { workspaceId } = c.req.param();
+
+            const workspace = await databases.getDocument<Workspace>(
+                DATABASE_ID,
+                WORKSPACES_ID,
+                workspaceId,
+            );
+
+            return c.json({
+                data: {
+                    $id: workspace.$id,
+                    name: workspace.name,
+                    imageUrl: workspace.imageUrl,
+                }
+            });
         }
     )
     .post(
@@ -74,7 +125,7 @@ const app = new Hono()
 
             const workspace = await databases.createDocument(
                 DATABASE_ID,
-                WORKSPACE_ID,
+                WORKSPACES_ID,
                 ID.unique(),
                 {
                     name,
@@ -141,7 +192,7 @@ const app = new Hono()
 
             const workspace = await databases.updateDocument(
                 DATABASE_ID,
-                WORKSPACE_ID,
+                WORKSPACES_ID,
                 workspaceId,
                 {
                     name,
@@ -175,7 +226,7 @@ const app = new Hono()
 
             await databases.deleteDocument(
                 DATABASE_ID,
-                WORKSPACE_ID,
+                WORKSPACES_ID,
                 workspaceId,
             );
 
@@ -203,7 +254,7 @@ const app = new Hono()
 
             const workspace = await databases.updateDocument(
                 DATABASE_ID,
-                WORKSPACE_ID,
+                WORKSPACES_ID,
                 workspaceId,
                 {
                     inviteCode: generateInviteCode(6),
@@ -236,7 +287,7 @@ const app = new Hono()
 
             const workspace = await databases.getDocument<Workspace>(
                 DATABASE_ID,
-                WORKSPACE_ID,
+                WORKSPACES_ID,
                 workspaceId,
             );
 
